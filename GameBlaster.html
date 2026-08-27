@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=display-width, initial-scale=1.0">
+        <title>Timoha-Blaster 1.0</title>
+        <style>
+        body {
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            background-color: rgb(43, 41, 41);
+        }
+
+        #game-area {
+            width: 400px;
+            height: 400px;
+            border: 2px solid black;
+            position: relative; /* Важно для позиционирования внутри */
+            background-color: #6b6969;
+        }
+
+        /* Стиль для игрока (сейчас это див с эмодзи) */
+        #player {
+            width: 40px; /* Задаем размер контейнера */
+            height: 40px;
+            position: absolute;
+            /* Центрируем эмодзи внутри контейнера */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px; /* Размер самого эмодзи */
+        }
+
+        /* Стиль для бургеров */
+        .burger {
+            width: 35px; /* Задаем размер контейнера */
+            height: 35px;
+            position: absolute;
+            /* Центрируем эмодзи внутри контейнера */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px; /* Размер самого эмодзи */
+        }
+
+        #controls {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 60px);
+            gap: 5px;
+        }
+
+        #controls button {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        #up { grid-column: 2; grid-row: 1; }
+        #left { grid-column: 1; grid-row: 2; }
+        #down { grid-column: 2; grid-row: 2; }
+        #right { grid-column: 3; grid-row: 2; }
+        
+        #score {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        h1 {
+            color: white;   
+        }
+        </style>
+    </head>
+    <body>
+        <h1 style="text-align: center;">Космические приключения Тимохи!</h1>
+        <div id="game-area">
+            <div id="player"><img src="photo (1).png" width="50px"></div>
+        </div>
+        <div id="controls">
+            <button onclick="moveTimoha('left');">←</button>
+            <button onclick="moveTimoha('right');">→</button>
+            <button onclick="Bulls();">Стрелять</button>
+        </div>
+        <div id="score" style="color: white;">Счет: 0</div>
+
+        <script>
+            const Timoha = document.getElementById("player");
+            const scoreElement = document.getElementById("score");
+
+            let burgers = [];
+            let bulls = [];
+            let game_area_size = 350;
+            let score = 0;
+
+            Timoha.style.position = "absolute";
+            Timoha.style.top = "350px";
+            Timoha.style.left = "180px";
+
+            function moveTimoha(dvig) {
+                let step = 10;
+                let x = parseInt(Timoha.style.left) || 180;
+
+                if (dvig === "left") {
+                    x -= step;
+                } else {
+                    x += step;
+                }
+
+                if (x < 0) x = 0;
+                if (x > 350) x = 350;
+
+                Timoha.style.left = x + "px";
+            }
+
+            function spawnBurgers() {
+                let burger_width = 40;
+                const burger = document.createElement("div");
+                burger.className = 'burger';
+                burger.style.position = 'absolute';
+                let newX = game_area_size - burger_width;
+                let randomX = Math.floor(Math.random() * newX);
+
+                burger.style.left = randomX + "px";
+                burger.style.top = "0px";
+
+                const img = document.createElement("img");
+                img.src = 'burger1.jpg';
+                img.width = burger_width;
+                burger.appendChild(img);
+
+                document.getElementById('game-area').appendChild(burger);
+                burgers.push(burger);
+            }
+
+            function moveBurgers() {
+                for (let i = burgers.length - 1; i >= 0; i--) {
+                    let top = parseInt(burgers[i].style.top) || 0;
+                    top += 1.2;
+                    burgers[i].style.top = top + "px";
+                }
+            }
+
+            function gameOver() {
+                for (let i = burgers.length - 1; i >= 0; i--) {
+                    let newY = parseInt(burgers[i].style.top) || 350;
+
+                    if (newY >= 350) {
+                        burgers.forEach(burger => burger.remove());
+                        burgers = [];
+                        alert("Game Over!");
+                        location.reload();
+                        return;
+                    }
+                }
+            }
+
+            function Bulls() {
+                const bull = document.createElement("div");
+                bull.className = 'bull';
+                bull.innerHTML = '•';
+                bull.style.position = 'absolute';
+                bull.style.top = "350px";
+
+                let x = parseInt(Timoha.style.left) || 180;
+                bull.style.left = x + "px";
+                document.getElementById('game-area').appendChild(bull);
+                bulls.push(bull);
+            }
+
+            function moveBulls() {
+                for (let i = 0; i < bulls.length; i++) {
+                    let top = parseInt(bulls[i].style.top) || 350;
+                    top -= 3;
+                    bulls[i].style.top = top + "px";
+
+                    if (top < 0) {
+                        bulls[i].remove();
+                        bulls.splice(i, 1);
+                    }
+                }
+            }
+
+            function isColliding(a, b) {
+                const r1 = a.getBoundingClientRect();
+                const r2 = b.getBoundingClientRect();
+
+                return !(r1.right < r2.left ||
+                        r1.left > r2.right ||
+                        r1.bottom < r2.top ||
+                        r1.top > r2.bottom
+                );
+            }
+
+            function Win() {
+                for (let i = 0; i < bulls.length; i++) {
+                    for (let j = 0; j < burgers.length; j++) {
+                        if (isColliding(bulls[i], burgers[j])) {
+                            score++;
+                            scoreElement.textContent = score;
+                            bulls[i].remove();
+                            bulls.splice(i, 1);
+                            burgers[j].remove();
+                            burgers.splice(j, 1);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            function update() {
+                moveBurgers();
+                moveBulls();
+                Win();
+                gameOver();
+            }
+
+            function loop() {
+                update();
+                requestAnimationFrame(loop);
+            }
+
+            setInterval(spawnBurgers, 3400);
+
+            loop();
+            spawnBurgers();
+        </script>
+    </body>
+</html>
